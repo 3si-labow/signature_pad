@@ -1,5 +1,5 @@
 {
-  "name": "wobal/signature_pad",
+  "name": "wobal-signaturepad",
   "description": "Library for drawing smooth signatures.",
   "version": "3.0.0-beta.3",
   "homepage": "https://github.com/szimek/signature_pad",
