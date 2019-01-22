@@ -12,7 +12,7 @@
     "newLine": "LF",
 
     "sourceMap": true,
-    "declaration": true,
+    "declaration": false,
     "declarationDir": "dist"
   }
 }
