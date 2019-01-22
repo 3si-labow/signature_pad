@@ -272,9 +272,15 @@ export default class SignaturePad {
   }
 
   private _strokeUpdate(event: MouseEvent | Touch): void {
+    const valScale = !!idPad ? $(idPad).css('-webkit-transform').match(/matrix\((-?\d*\.?\d+),\s*0,\s*0,\s*(-?\d*\.?\d+),\s*0,\s*0\)/)[1] : null;
     const x = event.clientX;
     const y = event.clientY;
-
+    if (valScale) {
+        const rect_canvas = this._canvas.getBoundingClientRect();
+        x = ((event.clientX - rect_canvas.left) / valScale) + (rect_canvas.left);
+        y = ((event.clientY - rect_canvas.top) / valScale) + (rect_canvas.top);
+    }
+    
     const point = this._createPoint(x, y);
     const lastPointGroup = this._data[this._data.length - 1];
     const lastPoints = lastPointGroup.points;
