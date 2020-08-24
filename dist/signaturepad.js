@@ -5,8 +5,8 @@
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    (global = global || self, global.SignaturePad = factory());
+        typeof define === 'function' && define.amd ? define(factory) :
+            (global = global || self, global.SignaturePad = factory());
 }(this, (function () { 'use strict';
 
     var Point = (function () {
@@ -187,9 +187,9 @@
                 : 5);
             this.dotSize =
                 options.dotSize ||
-                    function dotSize() {
-                        return (this.minWidth + this.maxWidth) / 2;
-                    };
+                function dotSize() {
+                    return (this.minWidth + this.maxWidth) / 2;
+                };
             this.penColor = options.penColor || 'black';
             this.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
             this.onBegin = options.onBegin;
@@ -300,6 +300,14 @@
         SignaturePad.prototype._strokeUpdate = function (event) {
             var x = event.clientX;
             var y = event.clientY;
+            var valScale = !!idPad ? $(idPad).css('-webkit-transform').match(/matrix\((-?\d*\.?\d+),\s*0,\s*0,\s*(-?\d*\.?\d+),\s*0,\s*0\)/)[1] : null;
+            var x  = event.clientX;
+            var y = event.clientY;
+            if (valScale) {
+                var rect_canvas = this.canvas.getBoundingClientRect();
+                x = ((event.clientX - rect_canvas.left) / valScale) + (rect_canvas.left);
+                y = ((event.clientY - rect_canvas.top) / valScale) + (rect_canvas.top);
+            }
             var point = this._createPoint(x, y);
             var lastPointGroup = this._data[this._data.length - 1];
             var lastPoints = lastPointGroup.points;
