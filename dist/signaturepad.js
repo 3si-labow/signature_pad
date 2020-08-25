@@ -144,44 +144,62 @@
             this._handleMouseDown = function (event) {
                 if (event.which === 1) {
                     _this._mouseButtonDown = true;
-                    _this._strokeBegin(event);
+                    if (!(_this.eraser)) {
+                        _this._strokeBegin(event);
+                    }
                 }
             };
             this._handleMouseMove = function (event) {
                 if (_this._mouseButtonDown) {
-                    _this._strokeMoveUpdate(event);
+                    if (!(_this.eraser)) {
+                        _this._strokeMoveUpdate(event);
+                    } else {
+                        _this._eraseStrokes(event);
+                    }
                 }
             };
             this._handleMouseUp = function (event) {
                 if (event.which === 1 && _this._mouseButtonDown) {
                     _this._mouseButtonDown = false;
-                    _this._strokeEnd(event);
+                    if (!(_this.eraser)) {
+                        _this._strokeEnd(event);
+                    }
                 }
             };
             this._handleTouchStart = function (event) {
                 event.preventDefault();
                 if (event.targetTouches.length === 1) {
                     var touch = event.changedTouches[0];
-                    _this._strokeBegin(touch);
+                    if (!(_this.eraser)) {
+                        _this._strokeBegin(touch);
+                    }
                 }
             };
             this._handleTouchMove = function (event) {
                 event.preventDefault();
                 var touch = event.targetTouches[0];
-                _this._strokeMoveUpdate(touch);
+                if (!(_this.eraser)) {
+                    _this._strokeMoveUpdate(touch);
+                } else {
+                    _this._strokeEnd(event);
+                }
             };
             this._handleTouchEnd = function (event) {
                 var wasCanvasTouched = event.target === _this.canvas;
                 if (wasCanvasTouched) {
                     event.preventDefault();
                     var touch = event.changedTouches[0];
-                    _this._strokeEnd(touch);
+                    if (!(_this.eraser)) {
+                        _this._strokeEnd(touch);
+                    }
                 }
             };
             this.velocityFilterWeight = options.velocityFilterWeight || 0.7;
             this.minWidth = options.minWidth || 0.5;
             this.maxWidth = options.maxWidth || 2.5;
             this.throttle = ('throttle' in options ? options.throttle : 16);
+            this.user = 'user' in options ? options.user : '';
+            this.eraser = 'eraser' in options ? options.eraser : false;
             this.minDistance = ('minDistance' in options
                 ? options.minDistance
                 : 5);
@@ -288,7 +306,9 @@
         SignaturePad.prototype._strokeBegin = function (event) {
             var newPointGroup = {
                 color: this.penColor,
-                points: []
+                user: this.user,
+                points: [],
+
             };
             if (typeof this.onBegin === 'function') {
                 this.onBegin(event);
@@ -331,6 +351,37 @@
                 });
             }
         };
+
+        SignaturePad.prototype._eraseStrokes = function (event) {
+            var x = event.clientX;
+            var y = event.clientY;
+            var valScale = !!idPad ? $(idPad).css('-webkit-transform').match(/matrix\((-?\d*\.?\d+),\s*0,\s*0,\s*(-?\d*\.?\d+),\s*0,\s*0\)/)[1] : null;
+            var x  = event.clientX;
+            var y = event.clientY;
+            if (valScale) {
+                var rect_canvas = this.canvas.getBoundingClientRect();
+                x = ((event.clientX - rect_canvas.left) / valScale) + (rect_canvas.left);
+                y = ((event.clientY - rect_canvas.top) / valScale) + (rect_canvas.top);
+            }
+            var point = this._createPoint(x, y);
+            var findPoint = false;
+            $.each(this._data,function() {
+                var _this = this;
+                $.each(this.points,function() {
+                    if (point.distanceTo({x:this.x,y:this.y}) < 4) {
+                        _this.color = "";
+                        findPoint = true;
+                    }
+                });
+            });
+            if (findPoint) {
+                _.remove(this._data,{color:""});
+                var tmpdata = this._data;
+                this.clear();
+                this.fromData(tmpdata);
+            }
+        };
+
         SignaturePad.prototype._strokeEnd = function (event) {
             this._strokeUpdate(event);
             if (typeof this.onEnd === 'function') {
