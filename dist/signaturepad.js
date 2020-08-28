@@ -26,6 +26,22 @@
                 ? this.distanceTo(start) / (this.time - start.time)
                 : 0;
         };
+        Point.prototype.lerp = function (a,b,x) {
+            return (a+x*(b-a));
+        };
+        // calculate the point on the line that's
+        // nearest to the mouse position
+        Point.prototype.linepointNearestMouse = function (line,x,y) {
+            var dx=line.x1-line.x0;
+            var dy=line.y1-line.y0;
+            var t=((x-line.x0)*dx+(y-line.y0)*dy)/(dx*dx+dy*dy);
+            var lineX=this.lerp(line.x0, line.x1, t);
+            var lineY=this.lerp(line.y0, line.y1, t);
+            if (x<0) {x=0;}
+            if (y<0) {y=0;}
+            return({x:lineX,y:lineY});
+        };
+
         return Point;
     }());
 
@@ -365,13 +381,43 @@
             }
             var point = this._createPoint(x, y);
             var findPoint = false;
+            var this_signature = this;
             $.each(this._data,function() {
                 var _this = this;
+                var point_previous;
+                if (this.points.length > 0) {
+                    point_previous = this.points[0];
+                }
                 $.each(this.points,function() {
-                    if (point.distanceTo({x:this.x,y:this.y}) < 4) {
-                        _this.color = "";
-                        findPoint = true;
+                    var tmppoint = {
+                        x0:point_previous.x,
+                        y0:point_previous.y,
+                        x1:this.x,
+                        y1:this.y
+                    };
+                    if (point_previous.x > this.x) {
+                        tmppoint = {
+                            x0:this.x,
+                            y0:this.y,
+                            x1:point_previous.x,
+                            y1:point_previous.y
+                        };
                     }
+                    var tmpcoord = {
+                        y0:Math.min(tmppoint.y0,tmppoint.y1),
+                        y1:Math.max(tmppoint.y0,tmppoint.y1)
+                    };
+                    if ((point.x>=tmppoint.x0) && (point.x<=tmppoint.x1) && (point.y>=tmpcoord.y0) && (point.y<=tmpcoord.y1)) {
+                        var linepoint = point.linepointNearestMouse({x0:tmppoint.x0,y0:tmppoint.y0,x1:tmppoint.x1,y1:tmppoint.y1},point.x,point.y);
+                        var dx = point.x-linepoint.x;
+                        var dy = point.y-linepoint.y;
+                        var distance = Math.abs(Math.sqrt(dx*dx+dy*dy));
+                        if (distance < 4) {
+                            _this.color = "";
+                            findPoint = true;
+                        }
+                    }
+                    point_previous = this;
                 });
             });
             if (findPoint) {
@@ -381,6 +427,7 @@
                 this.fromData(tmpdata);
             }
         };
+
 
         SignaturePad.prototype._strokeEnd = function (event) {
             this._strokeUpdate(event);
